@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WorkTimer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="container">
+    <h1>WorkTimer</h1>
+
+    <label>Date</label>
+    <input id="workDate" type="date">
+
+    <label>Start</label>
+    <input id="start" type="time">
+
+    <label>Finish</label>
+    <input id="finish" type="time">
+
+    <label>Break 1 (after 10:00)</label>
+    <select id="b1">
+      <option value="0">0 min</option>
+      <option value="15" selected>15 min</option>
+      <option value="30">30 min</option>
+      <option value="45">45 min</option>
+    </select>
+
+    <label>Lunch (after 12:30)</label>
+    <select id="lunch">
+      <option value="0">0 min</option>
+      <option value="15">15 min</option>
+      <option value="30" selected>30 min</option>
+      <option value="45">45 min</option>
+    </select>
+
+    <label>Break 2 (after 15:00)</label>
+    <select id="b2">
+      <option value="0">0 min</option>
+      <option value="15" selected>15 min</option>
+      <option value="30">30 min</option>
+      <option value="45">45 min</option>
+    </select>
+
+    <button onclick="calculate()">Save</button>
+
+    <h2 id="result" style="display:none;">Today: 0.00 h</h2>
+
+    <h3>
+      Current Payroll Week:
+      <span id="weekNumber">1</span>
+    </h3>
+
+    <h3>
+      Week Total:
+      <span id="week">0.00</span> h
+    </h3>
+
+    <h3>Journal</h3>
+    <div id="journal"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
