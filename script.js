@@ -1,4 +1,4 @@
-  const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyCdYIjwo5UDCYfdGXzzv6RwcEZ7Qrn41XQ",
   authDomain: "worktimer-11a27.firebaseapp.com",
   projectId: "worktimer-11a27",
