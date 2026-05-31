@@ -160,3 +160,13 @@ p {
     padding: 12px;
   }
 }
+
+#saveStatus {
+  text-align: center;
+  font-size: 14px;
+  color: #444;
+  min-height: 18px;
+
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
