@@ -2,14 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WorkTimer</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
 
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>WorkTimer</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
   <div class="container">
     <h1>WorkTimer</h1>
+
+    <div id="authSection">
+      <h3>Account</h3>
+
+      <div id="authForm">
+        <input id="email" type="email" placeholder="Email">
+        <input id="password" type="password" placeholder="Password">
+
+        <button onclick="register()">Create Account</button>
+        <button onclick="login()">Sign In</button>
+      </div>
+
+      <div id="signedInPanel" style="display:none;">
+        <p id="userInfo">Signed in</p>
+
+        <button
+          class="signout-btn"
+          onclick="logout()"
+          title="Sign Out"
+        >
+          🚪 Sign Out
+        </button>
+      </div>
+
+      <p id="syncStatus">Not signed in</p>
+    </div>
 
     <label>Date</label>
     <input id="workDate" type="date">
@@ -46,7 +82,9 @@
 
     <button onclick="calculate()">Save</button>
 
-    <h2 id="result" style="display:none;">Today: 0.00 h</h2>
+    <h2 id="result" style="display:none;">
+      Today: 0.00 h
+    </h2>
 
     <h3>
       Current Payroll Week:
@@ -65,4 +103,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-
