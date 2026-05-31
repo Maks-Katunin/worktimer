@@ -20,20 +20,28 @@ let cloudSynced = localStorage.getItem("cloudSynced") === "true";
    UI HELPERS
 ========================= */
 
+let statusTimeout;
+
 function setSyncStatus(message) {
-  document.getElementById("syncStatus").innerText = message;
+
+  const status =
+    document.getElementById("saveStatus");
+
+  if (!status) return;
+
+  status.style.opacity = "1";
+
+  status.innerText = message;
+
+  clearTimeout(statusTimeout);
+
+  statusTimeout = setTimeout(() => {
+
+    status.style.opacity = "0";
+
+  }, 3500);
+
 }
-
-function showSignedOutUI() {
-  document.getElementById("authForm").style.display = "flex";
-  document.getElementById("signedInPanel").style.display = "none";
-
-  document.getElementById("userInfo").innerText =
-    "Not signed in";
-
-  setSyncStatus("Not signed in");
-}
-
 function showSignedInUI(user) {
   document.getElementById("authForm").style.display = "none";
 
