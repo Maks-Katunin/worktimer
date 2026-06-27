@@ -44,6 +44,16 @@
       <option value="45">45 min</option>
     </select>
 
+    <button type="button" class="note-toggle" onclick="toggleNoteField()">
+  📝 Add note...
+</button>
+
+<textarea
+  id="note"
+  placeholder="Write a note..."
+  style="display:none;"
+></textarea>
+    
     <button onclick="calculate()">Save</button>
 
     <h2 id="result" style="display:none;">Today: 0.00 h</h2>
