@@ -761,11 +761,16 @@ function updateJournal() {
             "div"
           );
 
+        const dayName = new Date(e.date).toLocaleDateString("en-GB", {
+  weekday: "long"
+});
+        
+        
         info.className =
           "entry-info";
 
         info.innerHTML = `
-          <strong>${e.date}</strong><br>
+        <strong>${dayName} • ${e.date}</strong><br>
           ${e.start} - ${e.finish}<br>
           ${Number(
             e.hours || 0
