@@ -541,6 +541,10 @@ const entry = {
     hours.toFixed(2) +
     " h";
 
+  const noteField = document.getElementById("note");
+noteField.value = "";
+noteField.style.display = "none";
+  
   updateJournal();
   updateWeek();
 }
