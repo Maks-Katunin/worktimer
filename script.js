@@ -399,6 +399,18 @@ function formatDate(date) {
   );
 }
 
+if (e.note) {
+    const noteIndicator = document.createElement("div");
+    noteIndicator.className = "entry-note";
+    noteIndicator.textContent = "📝 1 note";
+
+    noteIndicator.onclick = () => {
+        alert(e.note);
+    };
+
+    info.appendChild(noteIndicator);
+}
+
 /* =========================
    CALCULATE
 ========================= */
@@ -476,17 +488,17 @@ async function calculate() {
     totalMinutes / 60
   );
 
-  const entry = {
-    date: dateValue,
-    start: startVal,
-    finish: finishVal,
-    b1,
-    lunch,
-    b2,
-    hours,
-    updatedAt:
-      new Date().toISOString()
-  };
+  const note = document.getElementById("note").value.trim();
+const entry = {
+  date: dateValue,
+  start: startVal,
+  finish: finishVal,
+  b1,
+  lunch,
+  b2,
+  hours,
+  note
+};
 
   const index =
     entries.findIndex(
@@ -610,6 +622,15 @@ function editEntry(date) {
     "b1"
   ).value = entry.b1;
 
+  const noteField = document.getElementById("note");
+noteField.value = entry.note || "";
+
+if (entry.note) {
+  noteField.style.display = "block";
+} else {
+  noteField.style.display = "none";
+}
+  
   document.getElementById(
     "lunch"
   ).value = entry.lunch;
@@ -742,6 +763,18 @@ function updateJournal() {
             "div"
           );
 
+        if (e.note) {
+  const noteIndicator = document.createElement("div");
+  noteIndicator.className = "entry-note";
+  noteIndicator.textContent = "📝 1 note";
+
+  noteIndicator.onclick = () => {
+    alert(e.note);
+  };
+
+  info.appendChild(noteIndicator);
+}
+        
         actions.className =
           "entry-actions";
 
