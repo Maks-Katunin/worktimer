@@ -64,6 +64,19 @@ function formatDate(date) {
   return date.toLocaleDateString("en-GB");
 }
 
+function toggleNoteField() {
+  const note = document.getElementById("note");
+
+  if (!note) return;
+
+  if (note.style.display === "none" || note.style.display === "") {
+    note.style.display = "block";
+    note.focus();
+  } else {
+    note.style.display = "none";
+  }
+}
+
 /* =========================
    CALCULATION (BREAK LOGIC FIXED)
 ========================= */
@@ -108,15 +121,17 @@ function calculate() {
   document.getElementById("result").innerText =
     "Today: " + hours.toFixed(2) + " h";
 
-  const entry = {
-    date: dateValue,
-    start: startVal,
-    finish: finishVal,
-    b1,
-    lunch,
-    b2,
-    hours
-  };
+  const note = document.getElementById("note").value.trim();
+ const entry = {
+  date: dateValue,
+  start: startVal,
+  finish: finishVal,
+  b1,
+  lunch,
+  b2,
+  hours,
+  note
+};
 
   const index = entries.findIndex(e => e.date === dateValue);
 
@@ -172,21 +187,19 @@ function editEntry(date) {
   document.getElementById("lunch").value = entry.lunch;
   document.getElementById("b2").value = entry.b2;
 
+  const noteField = document.getElementById("note");
+  noteField.value = entry.note || "";
+
+  if (entry.note) {
+    noteField.style.display = "block";
+  } else {
+    noteField.style.display = "none";
+  }
+
   updateWeek();
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
-
-function deleteEntry(date) {
-  if (!confirm("Delete entry?")) return;
-
-  entries = entries.filter(e => e.date !== date);
-
-  saveEntries();
-  updateJournal();
-  updateWeek();
-}
-
 /* =========================
    JOURNAL
 ========================= */
@@ -232,10 +245,21 @@ function updateJournal() {
 
         const info = document.createElement("div");
         info.innerHTML = `
-          <strong>${e.date}</strong><br>
-          ${e.start} - ${e.finish}<br>
-          ${e.hours.toFixed(2)} h
-        `;
+  <strong>${e.date}</strong><br>
+  ${e.start} - ${e.finish}<br>
+  ${Number(e.hours || 0).toFixed(2)} h
+`;
+        if (e.note) {
+    const noteIndicator = document.createElement("div");
+    noteIndicator.className = "entry-note";
+    noteIndicator.textContent = "📝 1 note";
+
+    noteIndicator.onclick = () => {
+        alert(e.note);
+    };
+
+    info.appendChild(noteIndicator);
+}
 
         const actions = document.createElement("div");
         actions.style.display = "flex";
