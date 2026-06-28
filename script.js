@@ -412,6 +412,15 @@ function toggleNoteField() {
   }
 }
 
+function openNoteModal(text) {
+  document.getElementById("noteModalText").innerText = text;
+  document.getElementById("noteModal").style.display = "flex";
+}
+
+function closeNoteModal() {
+  document.getElementById("noteModal").style.display = "none";
+}
+
 /* =========================
    CALCULATE
 ========================= */
@@ -774,7 +783,7 @@ function updateJournal() {
   noteIndicator.textContent = "📝 1 note";
 
   noteIndicator.onclick = () => {
-    alert(e.note);
+    openNoteModal(e.note);
   };
 
   info.appendChild(noteIndicator);
