@@ -769,8 +769,7 @@ function updateJournal() {
         info.className =
           "entry-info";
 
-        info.innerHTML = `
-        <strong>${dayName} • ${e.date}</strong><br>
+        info.innerHTML = `<strong>${dayName} • ${e.date}</strong><br>
           ${e.start} - ${e.finish}<br>
           ${Number(
             e.hours || 0
