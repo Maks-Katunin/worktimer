@@ -399,16 +399,17 @@ function formatDate(date) {
   );
 }
 
-if (e.note) {
-    const noteIndicator = document.createElement("div");
-    noteIndicator.className = "entry-note";
-    noteIndicator.textContent = "📝 1 note";
+function toggleNoteField() {
+  const note = document.getElementById("note");
 
-    noteIndicator.onclick = () => {
-        alert(e.note);
-    };
+  if (!note) return;
 
-    info.appendChild(noteIndicator);
+  if (note.style.display === "none" || note.style.display === "") {
+    note.style.display = "block";
+    note.focus();
+  } else {
+    note.style.display = "none";
+  }
 }
 
 /* =========================
