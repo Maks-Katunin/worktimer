@@ -53,3 +53,10 @@ Simple calculator for my own work on UK farms.
 
 ### Milestone
 🎉 First public users started using WorkTimer.
+
+
+Current work in progress:
+- Notes feature started
+- HTML/CSS added
+- JS partially added
+- Need to finish note save/display test
