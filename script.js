@@ -195,11 +195,37 @@ function logout() {
   auth.signOut();
 }
 
+async function checkProfile(user) {
+  try {
+    const profileDoc = await db
+      .collection("users")
+      .doc(user.uid)
+      .get();
+
+    if (profileDoc.exists) {
+      console.log("Profile found");
+    }
+
+    else {
+      console.log("Profile not found");
+    }
+  }
+
+  catch (error) {
+    console.error(
+      "Profile check failed:",
+      error
+    );
+  }
+}
+
 auth.onAuthStateChanged(async user => {
   currentUser = user;
 
   if (user) {
     showSignedInUI(user);
+
+    checkProfile(user);
 
     setSyncStatus(
       "Checking cloud records..."
