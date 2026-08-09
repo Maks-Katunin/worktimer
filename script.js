@@ -42,6 +42,18 @@ function setSyncStatus(message) {
   }, 3500);
 
 }
+
+function setAccountStatus(message) {
+  document.getElementById("syncStatus").innerText = message;
+}
+
+function showSignedOutUI() {
+  document.getElementById("authForm").style.display = "flex";
+  document.getElementById("signedInPanel").style.display = "none";
+
+  setAccountStatus("Not signed in");
+}
+
 function showSignedInUI(user) {
   document.getElementById("authForm").style.display = "none";
 
@@ -49,6 +61,8 @@ function showSignedInUI(user) {
 
   document.getElementById("userInfo").innerText =
     user.email;
+
+  setAccountStatus("Signed in");
 }
 
 /* =========================
@@ -113,9 +127,6 @@ function login() {
       email,
       password
     )
-    .then(() => {
-      setSyncStatus("Signed in");
-    })
     .catch(error => {
 
       if (error.code === "auth/user-not-found") {
@@ -134,6 +145,49 @@ function login() {
         alert("Sign in error");
       }
 
+    });
+}
+
+function resetPassword() {
+  const email =
+    document.getElementById("email").value.trim();
+
+  if (!email) {
+    setAccountStatus("Enter your email first.");
+    return;
+  }
+
+  setAccountStatus("Sending password reset email...");
+
+  auth
+    .sendPasswordResetEmail(email)
+    .then(() => {
+      setAccountStatus(
+        "Password reset email sent. Check your inbox."
+      );
+    })
+    .catch(error => {
+      if (error.code === "auth/invalid-email") {
+        setAccountStatus("Enter a valid email address.");
+      }
+
+      else if (error.code === "auth/too-many-requests") {
+        setAccountStatus(
+          "Too many attempts. Please try again later."
+        );
+      }
+
+      else if (error.code === "auth/network-request-failed") {
+        setAccountStatus(
+          "Network error. Check your connection and try again."
+        );
+      }
+
+      else {
+        setAccountStatus(
+          "Could not send the reset email. Please try again."
+        );
+      }
     });
 }
 
@@ -845,8 +899,6 @@ document.getElementById(
   new Date()
     .toISOString()
     .split("T")[0];
-
-showSignedOutUI();
 
 updateJournal();
 updateWeek();

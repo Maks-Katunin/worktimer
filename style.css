@@ -74,6 +74,18 @@ button:hover {
   gap: 8px;
 }
 
+.forgot-password-btn {
+  padding: 6px;
+  background: transparent;
+  color: #333;
+  font-size: 14px;
+  text-decoration: underline;
+}
+
+.forgot-password-btn:hover {
+  background: transparent;
+}
+
 #signedInPanel {
   display: flex;
   flex-direction: column;
