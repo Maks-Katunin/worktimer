@@ -103,6 +103,71 @@ button:hover {
   color: #333;
 }
 
+.profile-onboarding {
+  background: #f7f7f7;
+  padding: 12px;
+  border-radius: 8px;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-onboarding h2 {
+  margin: 0 0 5px;
+  text-align: center;
+}
+
+.role-selection {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.role-selection legend {
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.role-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #cccccc;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.role-card input {
+  width: auto;
+  margin: 3px 0 0;
+}
+
+.role-card:has(input:checked) {
+  border-color: #000000;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px #000000;
+}
+
+.role-card span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.role-card small {
+  font-weight: normal;
+  color: #555555;
+  line-height: 1.3;
+}
+
+.profile-onboarding button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .signout-btn {
   background: #444;
 }

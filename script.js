@@ -47,9 +47,52 @@ function setAccountStatus(message) {
   document.getElementById("syncStatus").innerText = message;
 }
 
+function showProfileOnboarding() {
+  document.getElementById(
+    "profileOnboarding"
+  ).style.display = "flex";
+}
+
+function hideProfileOnboarding() {
+  document.getElementById(
+    "profileOnboarding"
+  ).style.display = "none";
+}
+
+function validateProfileForm() {
+  const displayName = document
+    .getElementById("profileDisplayName")
+    .value
+    .trim();
+
+  const selectedRole =
+    document.querySelector(
+      'input[name="profileRole"]:checked'
+    );
+
+  const validRoles = [
+    "worker",
+    "teamLeader"
+  ];
+
+  const roleIsValid =
+    selectedRole &&
+    validRoles.includes(
+      selectedRole.value
+    );
+
+  document.getElementById(
+    "profileSaveButton"
+  ).disabled =
+    !displayName ||
+    !roleIsValid;
+}
+
 function showSignedOutUI() {
   document.getElementById("authForm").style.display = "flex";
   document.getElementById("signedInPanel").style.display = "none";
+
+  hideProfileOnboarding();
 
   setAccountStatus("Not signed in");
 }
@@ -202,16 +245,29 @@ async function checkProfile(user) {
       .doc(user.uid)
       .get();
 
+    if (
+      !currentUser ||
+      currentUser.uid !== user.uid
+    ) {
+      return;
+    }
+
     if (profileDoc.exists) {
+      hideProfileOnboarding();
+
       console.log("Profile found");
     }
 
     else {
+      showProfileOnboarding();
+
       console.log("Profile not found");
     }
   }
 
   catch (error) {
+    hideProfileOnboarding();
+
     console.error(
       "Profile check failed:",
       error
@@ -925,6 +981,24 @@ document.getElementById(
   new Date()
     .toISOString()
     .split("T")[0];
+
+document.getElementById(
+  "profileDisplayName"
+).addEventListener(
+  "input",
+  validateProfileForm
+);
+
+document.querySelectorAll(
+  'input[name="profileRole"]'
+).forEach(roleInput => {
+  roleInput.addEventListener(
+    "change",
+    validateProfileForm
+  );
+});
+
+validateProfileForm();
 
 updateJournal();
 updateWeek();

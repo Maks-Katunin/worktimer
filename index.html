@@ -54,6 +54,71 @@
       <p id="syncStatus">Not signed in</p>
     </div>
 
+    <section
+      id="profileOnboarding"
+      class="profile-onboarding"
+      style="display:none;"
+    >
+      <h2>Complete your profile</h2>
+
+      <label for="profileDisplayName">Display name</label>
+      <input
+        id="profileDisplayName"
+        type="text"
+        maxlength="100"
+        autocomplete="name"
+        placeholder="Your name"
+      >
+
+      <fieldset class="role-selection">
+        <legend>Choose your role</legend>
+
+        <label class="role-card">
+          <input
+            type="radio"
+            name="profileRole"
+            value="worker"
+          >
+          <span>
+            <strong>Worker</strong>
+            <small>Record your own working hours.</small>
+          </span>
+        </label>
+
+        <label class="role-card">
+          <input
+            type="radio"
+            name="profileRole"
+            value="teamLeader"
+          >
+          <span>
+            <strong>Team Leader</strong>
+            <small>
+              Manage a team and view team working-time statistics.
+            </small>
+          </span>
+        </label>
+      </fieldset>
+
+      <label for="profileWorkerNumber">
+        Worker number (optional)
+      </label>
+      <input
+        id="profileWorkerNumber"
+        type="text"
+        maxlength="50"
+        placeholder="Worker number"
+      >
+
+      <button
+        id="profileSaveButton"
+        type="button"
+        disabled
+      >
+        Save profile
+      </button>
+    </section>
+
     <label>Date</label>
     <input id="workDate" type="date">
 
