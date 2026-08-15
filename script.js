@@ -519,17 +519,14 @@ function logout() {
   auth.signOut();
 }
 
-async function checkProfile(user) {
+async function checkProfile(user, context) {
   try {
     const profileDoc = await db
       .collection("users")
       .doc(user.uid)
       .get();
 
-    if (
-      !currentUser ||
-      currentUser.uid !== user.uid
-    ) {
+    if (!isActiveAuthContext(context)) {
       return;
     }
 
@@ -547,12 +544,16 @@ async function checkProfile(user) {
   }
 
   catch (error) {
-    hideProfileOnboarding();
-
     console.error(
       "Profile check failed:",
       error
     );
+
+    if (!isActiveAuthContext(context)) {
+      return;
+    }
+
+    hideProfileOnboarding();
   }
 }
 
@@ -585,7 +586,7 @@ auth.onAuthStateChanged(async user => {
 
     showSignedInUI(user);
 
-    checkProfile(user);
+    checkProfile(user, context);
 
     setSyncStatus(
       "Checking cloud records..."
