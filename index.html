@@ -1,198 +1,181 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>WorkTimer</title>
+    <title>WorkTimer</title>
 
-  <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css" />
 
-  <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
-</head>
+    <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
+  </head>
 
-<body>
-  <div class="container">
-    <h1>WorkTimer</h1>
+  <body>
+    <div class="container">
+      <h1>WorkTimer</h1>
 
-    <div id="authSection">
-      <h3>Account</h3>
+      <div id="authSection">
+        <h3>Account</h3>
 
-      <div id="authForm">
-        <input id="email" type="email" placeholder="Email">
-        <input id="password" type="password" placeholder="Password">
+        <div id="authForm">
+          <input id="email" type="email" placeholder="Email" />
+          <input id="password" type="password" placeholder="Password" />
 
-        <button onclick="register()">Create Account</button>
-        <button onclick="login()">Sign In</button>
+          <button onclick="register()">Create Account</button>
+          <button onclick="login()">Sign In</button>
+          <button
+            type="button"
+            class="forgot-password-btn"
+            onclick="resetPassword()"
+          >
+            Forgot password?
+          </button>
+        </div>
+
+        <div id="signedInPanel" style="display: none">
+          <p id="userInfo">Signed in</p>
+
+          <button class="signout-btn" onclick="logout()" title="Sign Out">
+            🚪 Sign Out
+          </button>
+        </div>
+
+        <p id="syncStatus">Not signed in</p>
+      </div>
+
+      <section
+        id="profileOnboarding"
+        class="profile-onboarding"
+        style="display: none"
+      >
+        <h2>Complete your profile</h2>
+
+        <label for="profileDisplayName">Display name</label>
+        <input
+          id="profileDisplayName"
+          type="text"
+          maxlength="100"
+          autocomplete="name"
+          placeholder="Your name"
+        />
+
+        <fieldset class="role-selection">
+          <legend>Choose your role</legend>
+
+          <label class="role-card">
+            <input type="radio" name="profileRole" value="worker" />
+            <span>
+              <strong>Worker</strong>
+              <small>Record your own working hours.</small>
+            </span>
+          </label>
+
+          <label class="role-card">
+            <input type="radio" name="profileRole" value="teamLeader" />
+            <span>
+              <strong>Team Leader</strong>
+              <small>
+                Manage a team and view team working-time statistics.
+              </small>
+            </span>
+          </label>
+        </fieldset>
+
+        <label for="profileWorkerNumber"> Worker number (optional) </label>
+        <input
+          id="profileWorkerNumber"
+          type="text"
+          maxlength="50"
+          placeholder="Worker number"
+        />
+
         <button
+          id="profileSaveButton"
           type="button"
-          class="forgot-password-btn"
-          onclick="resetPassword()"
+          onclick="saveProfile()"
+          disabled
         >
-          Forgot password?
+          Save profile
         </button>
-      </div>
 
-      <div id="signedInPanel" style="display:none;">
-        <p id="userInfo">Signed in</p>
+        <p id="profileStatus" class="profile-status" aria-live="polite"></p>
+      </section>
 
-        <button
-          class="signout-btn"
-          onclick="logout()"
-          title="Sign Out"
-        >
-          🚪 Sign Out
-        </button>
-      </div>
+      <label>Date</label>
+      <input id="workDate" type="date" />
 
-      <p id="syncStatus">Not signed in</p>
+      <label>Start</label>
+      <input id="start" type="time" />
+
+      <label>Finish</label>
+      <input id="finish" type="time" />
+
+      <label>Break 1 (after 10:00)</label>
+      <select id="b1">
+        <option value="0">0 min</option>
+        <option value="15" selected>15 min</option>
+        <option value="30">30 min</option>
+        <option value="45">45 min</option>
+      </select>
+
+      <label>Lunch (after 12:30)</label>
+      <select id="lunch">
+        <option value="0">0 min</option>
+        <option value="15">15 min</option>
+        <option value="30" selected>30 min</option>
+        <option value="45">45 min</option>
+      </select>
+
+      <label>Break 2 (after 15:00)</label>
+      <select id="b2">
+        <option value="0">0 min</option>
+        <option value="15" selected>15 min</option>
+        <option value="30">30 min</option>
+        <option value="45">45 min</option>
+      </select>
+
+      <button type="button" class="note-toggle" onclick="toggleNoteField()">
+        📝 Add note...
+      </button>
+
+      <textarea
+        id="note"
+        placeholder="Write a note..."
+        style="display: none"
+      ></textarea>
+
+      <button onclick="calculate()">Save</button>
+
+      <p id="saveStatus"></p>
+
+      <h2 id="result" style="display: none">Today: 0.00 h</h2>
+
+      <h3>
+        Current Payroll Week:
+        <span id="weekNumber">1</span>
+      </h3>
+
+      <h3>
+        Week Total:
+        <span id="week">0.00</span> h
+      </h3>
+
+      <h3>Journal</h3>
+      <div id="journal"></div>
     </div>
 
-    <section
-      id="profileOnboarding"
-      class="profile-onboarding"
-      style="display:none;"
-    >
-      <h2>Complete your profile</h2>
+    <div id="noteModal" class="modal-overlay" style="display: none">
+      <div class="modal-box">
+        <h3>📝 Note</h3>
+        <p id="noteModalText"></p>
+        <button type="button" onclick="closeNoteModal()">Close</button>
+      </div>
+    </div>
 
-      <label for="profileDisplayName">Display name</label>
-      <input
-        id="profileDisplayName"
-        type="text"
-        maxlength="100"
-        autocomplete="name"
-        placeholder="Your name"
-      >
-
-      <fieldset class="role-selection">
-        <legend>Choose your role</legend>
-
-        <label class="role-card">
-          <input
-            type="radio"
-            name="profileRole"
-            value="worker"
-          >
-          <span>
-            <strong>Worker</strong>
-            <small>Record your own working hours.</small>
-          </span>
-        </label>
-
-        <label class="role-card">
-          <input
-            type="radio"
-            name="profileRole"
-            value="teamLeader"
-          >
-          <span>
-            <strong>Team Leader</strong>
-            <small>
-              Manage a team and view team working-time statistics.
-            </small>
-          </span>
-        </label>
-      </fieldset>
-
-      <label for="profileWorkerNumber">
-        Worker number (optional)
-      </label>
-      <input
-        id="profileWorkerNumber"
-        type="text"
-        maxlength="50"
-        placeholder="Worker number"
-      >
-
-      <button
-        id="profileSaveButton"
-        type="button"
-        disabled
-      >
-        Save profile
-      </button>
-    </section>
-
-    <label>Date</label>
-    <input id="workDate" type="date">
-
-    <label>Start</label>
-    <input id="start" type="time">
-
-    <label>Finish</label>
-    <input id="finish" type="time">
-
-    <label>Break 1 (after 10:00)</label>
-    <select id="b1">
-      <option value="0">0 min</option>
-      <option value="15" selected>15 min</option>
-      <option value="30">30 min</option>
-      <option value="45">45 min</option>
-    </select>
-
-    <label>Lunch (after 12:30)</label>
-    <select id="lunch">
-      <option value="0">0 min</option>
-      <option value="15">15 min</option>
-      <option value="30" selected>30 min</option>
-      <option value="45">45 min</option>
-    </select>
-
-    <label>Break 2 (after 15:00)</label>
-    <select id="b2">
-      <option value="0">0 min</option>
-      <option value="15" selected>15 min</option>
-      <option value="30">30 min</option>
-      <option value="45">45 min</option>
-    </select>
-
-    <button type="button" class="note-toggle" onclick="toggleNoteField()">
-  📝 Add note...
-</button>
-
-<textarea
-  id="note"
-  placeholder="Write a note..."
-  style="display:none;"
-></textarea>
-
-    
-    <button onclick="calculate()">Save</button>
-
-    <p id="saveStatus"></p>
-    
-    <h2 id="result" style="display:none;">
-      Today: 0.00 h
-    </h2>
-
-    <h3>
-      Current Payroll Week:
-      <span id="weekNumber">1</span>
-    </h3>
-
-    <h3>
-      Week Total:
-      <span id="week">0.00</span> h
-    </h3>
-
-    <h3>Journal</h3>
-    <div id="journal"></div>
-  </div>
-
-  <div id="noteModal" class="modal-overlay" style="display:none;">
-  <div class="modal-box">
-    <h3>📝 Note</h3>
-    <p id="noteModalText"></p>
-    <button type="button" onclick="closeNoteModal()">Close</button>
-  </div>
-</div>
-  
-  <script src="script.js"></script>
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>

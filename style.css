@@ -168,6 +168,13 @@ button:hover {
   cursor: not-allowed;
 }
 
+.profile-status {
+  min-height: 18px;
+  text-align: center;
+  font-size: 14px;
+  color: #444444;
+}
+
 .signout-btn {
   background: #444;
 }

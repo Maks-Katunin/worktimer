@@ -13,8 +13,106 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 let currentUser = null;
-let entries = JSON.parse(localStorage.getItem("entries") || "[]");
-let cloudSynced = localStorage.getItem("cloudSynced") === "true";
+let entries = [];
+let cloudSynced = false;
+let authSessionId = 0;
+let activeStorageContext = {
+  kind: "initializing",
+  uid: null,
+  sessionId: 0
+};
+let profileSaveInProgress = false;
+
+const LEGACY_ENTRIES_KEY = "entries";
+const ANONYMOUS_ENTRIES_KEY =
+  "worktimer:v2:entries:anonymous";
+
+function getUserEntriesKey(uid) {
+  return `worktimer:v2:entries:user:${uid}`;
+}
+
+function getUserCloudSyncedKey(uid) {
+  return `worktimer:v2:cloudSynced:user:${uid}`;
+}
+
+function readStoredEntries(key) {
+  try {
+    const stored = localStorage.getItem(key);
+
+    if (stored === null) return [];
+
+    const parsed = JSON.parse(stored);
+
+    return Array.isArray(parsed) ? parsed : [];
+  }
+
+  catch (error) {
+    console.error(
+      `Could not read local entries from ${key}:`,
+      error
+    );
+
+    return [];
+  }
+}
+
+function copyLegacyEntriesToAnonymous() {
+  if (
+    localStorage.getItem(
+      ANONYMOUS_ENTRIES_KEY
+    ) !== null
+  ) {
+    return;
+  }
+
+  const legacyEntries =
+    localStorage.getItem(
+      LEGACY_ENTRIES_KEY
+    );
+
+  if (legacyEntries === null) return;
+
+  try {
+    const parsed = JSON.parse(legacyEntries);
+
+    if (!Array.isArray(parsed)) return;
+
+    localStorage.setItem(
+      ANONYMOUS_ENTRIES_KEY,
+      legacyEntries
+    );
+  }
+
+  catch (error) {
+    console.error(
+      "Could not copy legacy local entries:",
+      error
+    );
+  }
+}
+
+function isActiveAuthContext(context) {
+  if (
+    !context ||
+    context.sessionId !== authSessionId
+  ) {
+    return false;
+  }
+
+  const activeUid = currentUser
+    ? currentUser.uid
+    : null;
+
+  return (
+    context.uid === activeUid &&
+    context.kind ===
+      activeStorageContext.kind &&
+    context.uid ===
+      activeStorageContext.uid
+  );
+}
+
+copyLegacyEntriesToAnonymous();
 
 /* =========================
    UI HELPERS
@@ -59,6 +157,12 @@ function hideProfileOnboarding() {
   ).style.display = "none";
 }
 
+function setProfileStatus(message) {
+  document.getElementById(
+    "profileStatus"
+  ).innerText = message;
+}
+
 function validateProfileForm() {
   const displayName = document
     .getElementById("profileDisplayName")
@@ -84,8 +188,185 @@ function validateProfileForm() {
   document.getElementById(
     "profileSaveButton"
   ).disabled =
+    profileSaveInProgress ||
     !displayName ||
     !roleIsValid;
+}
+
+async function saveProfile() {
+  if (profileSaveInProgress) return;
+
+  const user = currentUser;
+
+  const displayName = document
+    .getElementById("profileDisplayName")
+    .value
+    .trim();
+
+  const selectedRole =
+    document.querySelector(
+      'input[name="profileRole"]:checked'
+    );
+
+  const workerNumber = document
+    .getElementById("profileWorkerNumber")
+    .value
+    .trim();
+
+  const validRoles = [
+    "worker",
+    "teamLeader"
+  ];
+
+  if (!user) {
+    setProfileStatus(
+      "Sign in to save your profile."
+    );
+    return;
+  }
+
+  if (
+    !displayName ||
+    !selectedRole ||
+    !validRoles.includes(
+      selectedRole.value
+    )
+  ) {
+    setProfileStatus(
+      "Enter a display name and choose a role."
+    );
+
+    validateProfileForm();
+    return;
+  }
+
+  const timestamp =
+    firebase.firestore.FieldValue.serverTimestamp();
+
+  const profile = {
+    schemaVersion: 1,
+    role: selectedRole.value,
+    displayName,
+    createdAt: timestamp,
+    updatedAt: timestamp
+  };
+
+  if (workerNumber) {
+    profile.workerNumber = workerNumber;
+  }
+
+  const profileRef = db
+    .collection("users")
+    .doc(user.uid);
+
+  profileSaveInProgress = true;
+  validateProfileForm();
+  setProfileStatus("Saving profile...");
+
+  try {
+    await db.runTransaction(
+      async transaction => {
+        const profileDoc =
+          await transaction.get(
+            profileRef
+          );
+
+        if (profileDoc.exists) {
+          const error = new Error(
+            "Profile already exists"
+          );
+
+          error.name =
+            "ProfileAlreadyExistsError";
+
+          throw error;
+        }
+
+        transaction.set(
+          profileRef,
+          profile
+        );
+      }
+    );
+
+    if (
+      !currentUser ||
+      currentUser.uid !== user.uid
+    ) {
+      return;
+    }
+
+    setProfileStatus("Profile saved.");
+    console.log("Profile saved");
+
+    await new Promise(resolve => {
+      setTimeout(resolve, 1000);
+    });
+
+    if (
+      currentUser &&
+      currentUser.uid === user.uid
+    ) {
+      hideProfileOnboarding();
+    }
+  }
+
+  catch (error) {
+    console.error(
+      "Profile save failed:",
+      error
+    );
+
+    if (
+      !currentUser ||
+      currentUser.uid !== user.uid
+    ) {
+      return;
+    }
+
+    if (
+      error.name ===
+      "ProfileAlreadyExistsError"
+    ) {
+      setProfileStatus(
+        "A profile already exists for this account."
+      );
+    }
+
+    else if (
+      error.code === "permission-denied" ||
+      error.code === "unauthenticated"
+    ) {
+      setProfileStatus(
+        "Profile could not be saved. Please sign in again."
+      );
+    }
+
+    else if (
+      error.code === "unavailable"
+    ) {
+      setProfileStatus(
+        "Network error. Check your connection and try again."
+      );
+    }
+
+    else {
+      setProfileStatus(
+        "Could not save profile. Please try again."
+      );
+    }
+  }
+
+  finally {
+    profileSaveInProgress = false;
+
+    if (
+      currentUser &&
+      currentUser.uid === user.uid
+    ) {
+      validateProfileForm();
+    }
+  }
 }
 
 function showSignedOutUI() {
@@ -276,9 +557,32 @@ async function checkProfile(user) {
 }
 
 auth.onAuthStateChanged(async user => {
+  const sessionId = ++authSessionId;
+  const uid = user ? user.uid : null;
+
   currentUser = user;
+  entries = [];
+  cloudSynced = false;
+  activeStorageContext = user
+    ? {
+        kind: "user",
+        uid,
+        sessionId
+      }
+    : {
+        kind: "anonymous",
+        uid: null,
+        sessionId
+      };
+
+  updateJournal();
+  updateWeek();
 
   if (user) {
+    const context = {
+      ...activeStorageContext
+    };
+
     showSignedInUI(user);
 
     checkProfile(user);
@@ -287,15 +591,26 @@ auth.onAuthStateChanged(async user => {
       "Checking cloud records..."
     );
 
-    await loadCloudEntries();
+    const cloudEntries =
+      await loadCloudEntries(context);
 
-    if (entries.length > 0) {
+    if (
+      cloudEntries === null ||
+      !isActiveAuthContext(context)
+    ) {
+      return;
+    }
+
+    if (cloudEntries.length > 0) {
+      entries = cloudEntries;
       cloudSynced = true;
 
       localStorage.setItem(
-        "cloudSynced",
+        getUserCloudSyncedKey(uid),
         "true"
       );
+
+      saveLocalEntries(context);
 
       setSyncStatus(
         "Cloud data loaded and synced"
@@ -303,13 +618,24 @@ auth.onAuthStateChanged(async user => {
     }
 
     else {
-      loadLocalEntries();
+      loadLocalEntries(context);
 
       if (
         entries.length > 0 &&
         !cloudSynced
       ) {
-        await importLocalToCloud(false);
+        const imported =
+          await importLocalToCloud(
+            context,
+            false
+          );
+
+        if (
+          !imported ||
+          !isActiveAuthContext(context)
+        ) {
+          return;
+        }
       }
 
       else {
@@ -319,19 +645,25 @@ auth.onAuthStateChanged(async user => {
       }
     }
 
-    updateJournal();
-    updateWeek();
+    if (isActiveAuthContext(context)) {
+      updateJournal();
+      updateWeek();
+    }
   }
 
   else {
-    currentUser = null;
+    const context = {
+      ...activeStorageContext
+    };
 
     showSignedOutUI();
 
-    loadLocalEntries();
+    loadLocalEntries(context);
 
-    updateJournal();
-    updateWeek();
+    if (isActiveAuthContext(context)) {
+      updateJournal();
+      updateWeek();
+    }
   }
 });
 
@@ -339,83 +671,125 @@ auth.onAuthStateChanged(async user => {
    LOCAL / CLOUD
 ========================= */
 
-function loadLocalEntries() {
-  entries = JSON.parse(
-    localStorage.getItem("entries") || "[]"
-  );
+function getEntriesKey(context) {
+  return context.kind === "user"
+    ? getUserEntriesKey(context.uid)
+    : ANONYMOUS_ENTRIES_KEY;
 }
 
-function saveLocalEntries() {
+function loadLocalEntries(
+  context = activeStorageContext
+) {
+  if (!isActiveAuthContext(context)) return;
+
+  entries = readStoredEntries(
+    getEntriesKey(context)
+  );
+
+  cloudSynced =
+    context.kind === "user" &&
+    localStorage.getItem(
+      getUserCloudSyncedKey(context.uid)
+    ) === "true";
+}
+
+function saveLocalEntries(
+  context = activeStorageContext
+) {
+  if (!isActiveAuthContext(context)) return;
+
   localStorage.setItem(
-    "entries",
+    getEntriesKey(context),
     JSON.stringify(entries)
   );
 }
 
-async function loadCloudEntries() {
-  if (!currentUser) return;
-
+async function loadCloudEntries(context) {
   const snapshot = await db
     .collection("users")
-    .doc(currentUser.uid)
+    .doc(context.uid)
     .collection("entries")
     .orderBy("date", "desc")
     .get();
 
-  entries = [];
+  if (!isActiveAuthContext(context)) {
+    return null;
+  }
+
+  const loadedEntries = [];
 
   snapshot.forEach(doc => {
-    entries.push(doc.data());
+    loadedEntries.push(doc.data());
   });
+
+  return loadedEntries;
 }
 
-async function saveEntryToCloud(entry) {
-  if (!currentUser) return;
-
+async function saveEntryToCloud(
+  entry,
+  context
+) {
   await db
     .collection("users")
-    .doc(currentUser.uid)
+    .doc(context.uid)
     .collection("entries")
     .doc(entry.date)
     .set(entry);
 
+  if (!isActiveAuthContext(context)) {
+    return false;
+  }
+
   cloudSynced = true;
 
   localStorage.setItem(
-    "cloudSynced",
+    getUserCloudSyncedKey(context.uid),
     "true"
   );
 
   setSyncStatus(
     "Last entry synced to cloud"
   );
+
+  return true;
 }
 
-async function deleteEntryFromCloud(date) {
-  if (!currentUser) return;
-
+async function deleteEntryFromCloud(
+  date,
+  context
+) {
   await db
     .collection("users")
-    .doc(currentUser.uid)
+    .doc(context.uid)
     .collection("entries")
     .doc(date)
     .delete();
 
+  if (!isActiveAuthContext(context)) {
+    return false;
+  }
+
   setSyncStatus(
     "Entry deleted from cloud"
   );
+
+  return true;
 }
 
 async function importLocalToCloud(
+  context,
   showAlert = true
 ) {
-  if (!currentUser) {
+  if (
+    context.kind !== "user" ||
+    !isActiveAuthContext(context)
+  ) {
     alert("Sign in first");
-    return;
+    return false;
   }
 
-  const localEntries = JSON.parse(
-    localStorage.getItem("entries") || "[]"
+  const localEntries = readStoredEntries(
+    getUserEntriesKey(context.uid)
   );
 
   if (localEntries.length === 0) {
@@ -423,7 +797,7 @@ async function importLocalToCloud(
       "No local records to import"
     );
 
-    return;
+    return true;
   }
 
   setSyncStatus(
@@ -431,17 +805,38 @@ async function importLocalToCloud(
   );
 
   for (const entry of localEntries) {
-    await saveEntryToCloud(entry);
+    if (!isActiveAuthContext(context)) {
+      return false;
+    }
+
+    const saved = await saveEntryToCloud(
+      entry,
+      context
+    );
+
+    if (!saved) return false;
   }
 
-  await loadCloudEntries();
+  const cloudEntries =
+    await loadCloudEntries(context);
+
+  if (
+    cloudEntries === null ||
+    !isActiveAuthContext(context)
+  ) {
+    return false;
+  }
+
+  entries = cloudEntries;
 
   cloudSynced = true;
 
   localStorage.setItem(
-    "cloudSynced",
+    getUserCloudSyncedKey(context.uid),
     "true"
   );
+
+  saveLocalEntries(context);
 
   updateJournal();
   updateWeek();
@@ -455,6 +850,8 @@ async function importLocalToCloud(
       "Local records synced to cloud"
     );
   }
+
+  return true;
 }
 
 /* =========================
@@ -562,6 +959,10 @@ function closeNoteModal() {
 ========================= */
 
 async function calculate() {
+  const operationContext = {
+    ...activeStorageContext
+  };
+
   const dateValue =
     document.getElementById(
       "workDate"
@@ -663,10 +1064,22 @@ const entry = {
     b.date.localeCompare(a.date)
   );
 
-  saveLocalEntries();
+  saveLocalEntries(operationContext);
 
-  if (currentUser) {
-    await saveEntryToCloud(entry);
+  if (operationContext.kind === "user") {
+    const saved = await saveEntryToCloud(
+      entry,
+      operationContext
+    );
+
+    if (
+      !saved ||
+      !isActiveAuthContext(
+        operationContext
+      )
+    ) {
+      return;
+    }
   }
 
   else {
@@ -801,14 +1214,31 @@ async function deleteEntry(date) {
   if (!confirm("Delete entry?"))
     return;
 
+  const operationContext = {
+    ...activeStorageContext
+  };
+
   entries = entries.filter(
     e => e.date !== date
   );
 
-  saveLocalEntries();
+  saveLocalEntries(operationContext);
 
-  if (currentUser) {
-    await deleteEntryFromCloud(date);
+  if (operationContext.kind === "user") {
+    const deleted =
+      await deleteEntryFromCloud(
+        date,
+        operationContext
+      );
+
+    if (
+      !deleted ||
+      !isActiveAuthContext(
+        operationContext
+      )
+    ) {
+      return;
+    }
   }
 
   updateJournal();
